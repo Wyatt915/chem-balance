@@ -26,6 +26,7 @@ void freeMatrix(matrix* m){
     m->r = 0;
     m->c = 0;
     m->data = 0x0;
+    free(m);
 }
 
 void printMatrix(const matrix* m){
@@ -60,6 +61,21 @@ void replaceRow(matrix* m, size_t r, size_t other, frac mult){
     }
 }
 
+// sets pivots to 1, potentially resulting in noninteger entries
+void normalize_pivots(matrix* m){
+    size_t c;
+    for (size_t r = 0; r < m->r; r++){
+        c = 0;
+        while (c < m->c && m->data[r][c].n == 0) { c++; }
+        if (c == m->c) continue; // no pivots
+        frac mult = reciprocal(m->data[r][c]);
+        for (; c < m->c ; c++){
+            m->data[r][c] = fr_mul(m->data[r][c], mult);
+        }
+    }
+}
+
+// Gives a matrix of whole numbers
 void normalize_rows(matrix* m){
     if (m->c < 2) return; // nothing to do!
     int* numerators = malloc(m->c * sizeof(int));
@@ -76,19 +92,18 @@ void normalize_rows(matrix* m){
             numerators[count++] = m->data[r][c].n;
         }
         int divisor = gcd_list(numerators, count);
-        printf("row: %i\tdivisor: %i\n", r, divisor);
         for (c = 0; c < m->c; c++){
             m->data[r][c].n /= divisor;
             simplify(&(m->data[r][c]));
         }
         // Now we want all pivots to be positive
-        c = 0;
-        while (c < m->c && m->data[r][c].n == 0) { c++; }
-        if (c == m->c) continue; // no pivots
-        int mult = m->data[r][c].n < 0 ? -1 : 1;
-        for (; c < m->c ; c++){
-            m->data[r][c].n *= mult;
-        }
+        // c = 0;
+        // while (c < m->c && m->data[r][c].n == 0) { c++; }
+        // if (c == m->c) continue; // no pivots
+        // int mult = m->data[r][c].n < 0 ? -1 : 1;
+        // for (; c < m->c ; c++){
+        //     m->data[r][c].n *= mult;
+        // }
     }
     free(numerators);
 }

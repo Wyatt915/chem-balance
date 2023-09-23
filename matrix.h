@@ -19,3 +19,4 @@ void freeMatrix(matrix* m);
 //fill matrix row-by-row
 void loadIntValues(matrix* m, int* values);
 void rref(matrix* m);
+void normalize_pivots(matrix* m);
