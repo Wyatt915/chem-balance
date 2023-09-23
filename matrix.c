@@ -54,6 +54,12 @@ void swapRows(matrix* m, size_t r1, size_t r2){
     m->data[r2] = row;
 }
 
+void scaleRow(matrix* m, size_t r, frac mult){
+    for (size_t c = 0; c < m->c; c++){
+        m->data[r][c] = fr_mul(mult, m->data[r][c]);
+    }
+}
+
 // r = r + (mult * other)
 void replaceRow(matrix* m, size_t r, size_t other, frac mult){
     for (size_t i = 0; i < m->c; i++){

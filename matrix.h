@@ -20,3 +20,4 @@ void freeMatrix(matrix* m);
 void loadIntValues(matrix* m, int* values);
 void rref(matrix* m);
 void normalize_pivots(matrix* m);
+void scaleRow(matrix* m, size_t r, frac mult);
