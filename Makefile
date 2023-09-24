@@ -22,4 +22,4 @@ $(EXEC): $(OBJECTS)
 	$(CC) $^ $(LNFLAGS) -o $@
 
 clean:
-	rm *.o vgcore.*
+	rm -f *.o vgcore.*

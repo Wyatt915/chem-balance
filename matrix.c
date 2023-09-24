@@ -102,14 +102,6 @@ void normalize_rows(matrix* m){
             m->data[r][c].n /= divisor;
             simplify(&(m->data[r][c]));
         }
-        // Now we want all pivots to be positive
-        // c = 0;
-        // while (c < m->c && m->data[r][c].n == 0) { c++; }
-        // if (c == m->c) continue; // no pivots
-        // int mult = m->data[r][c].n < 0 ? -1 : 1;
-        // for (; c < m->c ; c++){
-        //     m->data[r][c].n *= mult;
-        // }
     }
     free(numerators);
 }
@@ -148,4 +140,5 @@ void rref(matrix* m){
         }
     }
     normalize_rows(m);
+    normalize_pivots(m);
 }
