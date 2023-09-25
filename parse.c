@@ -49,8 +49,8 @@ int bin_search(const char** lst, size_t len, const char* key){
         idx = (a+b) / 2;
         cmp = strcmp(lst[idx], key);
         if (cmp == 0) return idx;
-        else if (cmp < 0) b = idx;
-        else a = idx;
+        else if (cmp > 0) b = idx - 1;
+        else a = idx + 1; //IMPORTANT
     }
     if (strcmp(lst[a], key) == 0) return a;
     return -1;
@@ -61,6 +61,7 @@ int char_in_str(const char* str, size_t n, char key){
     const char* p = str;
     while (*p && p < str + n){
         if (*p == key) return p - str;
+        p++;
     }
     return -1;
 }
@@ -177,11 +178,11 @@ char** list_elements(const char * eqn, size_t* count){
     size_t sym_beg, sym_end, sym_len;
     char temp[16];
     int is_in_list;
-    while (get_next_element(p, &sym_beg, &sym_end) == 0) {
+    while (get_next_element(p, &sym_beg, &sym_end)) {
         sym_len = sym_end - sym_beg < 16 ? sym_end - sym_beg : 15; // truncate symbol to 15 chars
         memset(temp, 0, 16); // fill w/ nulls because I don't trust strncpy
         strncpy(temp, p + sym_beg, sym_len);
-        p += sym_end - sym_beg;
+        p += sym_end;
         is_in_list = (1 == 0);
         for (size_t i = 0; i < *count; i++){
             if (strcmp(temp, list[i]) == 0){
@@ -203,6 +204,9 @@ char** list_elements(const char * eqn, size_t* count){
     free(list);
     // sort alphabetically
     qsort(out, *count, sizeof(char*), strcmpWrapper);
+    for (size_t i = 0; i < *count; i++){
+        printf("%s\n", out[i]);
+    }
     return out;
 }
 
@@ -231,17 +235,18 @@ matrix* eqn_to_matrix(const char* eqn){
     temp = strtok(eqn_copy, "=");
     if (!temp) return NULL;
     char* reactants = malloc((strlen(temp)+1)*sizeof(char));
+    strcpy(reactants, temp);
     temp = strtok(NULL, "=");
     if (!temp) return NULL;
     char* products = malloc((strlen(temp)+1)*sizeof(char));
+    strcpy(products, temp);
 
     size_t num_elem_r, num_elem_p; // count number of elements in reactants and products
-    size_t num_r, num_p; //number of reactant/product species
 
     char** elements_r = list_elements(reactants, &num_elem_r);
-    num_r = count_in_str(reactants, '+') + 1;
     char** elements_p = list_elements(products, &num_elem_p);
-    num_p = count_in_str(products, '+') + 1;
+
+    printf("num_elem_r: %i\tnum_elem_p: %i\n", num_elem_r, num_elem_p);
 
     if (is_invalid(elements_r, num_elem_r, elements_p, num_elem_p)){
         free(reactants);
@@ -264,8 +269,11 @@ matrix* eqn_to_matrix(const char* eqn){
     free(elements_r);
     char** elements = elements_p;
 
-    char** reactant_species = malloc(num_r * sizeof(char*));
-    char** product_species  = malloc(num_p * sizeof(char*));
+    size_t num_react = count_in_str(reactants, '+') + 1;
+    size_t num_prod = count_in_str(products, '+') + 1;
+
+    char** reactant_species = malloc(num_react * sizeof(char*));
+    char** product_species  = malloc(num_prod * sizeof(char*));
     temp = strtok(reactants, " +");
     size_t count = 0;
     do {
@@ -291,18 +299,18 @@ matrix* eqn_to_matrix(const char* eqn){
     // columns is the number of reactant species plus the number of product
     // species.
     size_t num_rows = num_elem_r;
-    size_t num_cols = num_p + num_r;
+    size_t num_cols = num_prod + num_react;
     matrix* eqnMatrix = createMatrix(num_rows, num_cols);
     int* column = malloc(num_rows * sizeof(int));
-    for (size_t c = 0; c < num_r; c++){
+    for (size_t c = 0; c < num_react; c++){
         count_in_species(reactant_species[c], num_rows, elements, column);
         for (size_t r = 0; r < num_rows; r++){
             //mult by -1 only for reactants
             eqnMatrix->data[r][c] = itofrac(-1 * column[r]);
         }
     }
-    for (size_t c = num_r; c < num_cols; c++){
-        count_in_species(reactant_species[c-num_r], num_rows, elements, column);
+    for (size_t c = num_react; c < num_cols; c++){
+        count_in_species(product_species[c-num_react], num_rows, elements, column);
         for (size_t r = 0; r < num_rows; r++){
             eqnMatrix->data[r][c] = itofrac(column[r]);
         }
