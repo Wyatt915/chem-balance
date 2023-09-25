@@ -2,6 +2,7 @@
 
 #include "matrix.h"
 
-//matrix* eqnToMatrix(const char* str);
+matrix* eqn_to_matrix(const char* eqn);
 
 char** list_elements(char const* eqn, size_t* count);
+

@@ -30,38 +30,40 @@ void chem_balance(matrix* m){
     free(freecolumn);
 }
 
-int main(){
-    int mydata[30] = {
-        -1,  0,   0,  0,  0,  2,
-        -1,  0,   2,  0,  0,  0,
-        -3, -11,  0,  2,  1,  3,
-        0,  -12,  0,  1,  0,  1,
-        0,  -22,  0,  0,  2,  0
-    };
-    matrix* mymatrix = createMatrix(5,6);
+int main(int argc, char* argv[]){
+    // int mydata[30] = {
+    //     -1,  0,   0,  0,  0,  2,
+    //     -1,  0,   2,  0,  0,  0,
+    //     -3, -11,  0,  2,  1,  3,
+    //     0,  -12,  0,  1,  0,  1,
+    //     0,  -22,  0,  0,  2,  0
+    // };
+    // matrix* mymatrix = createMatrix(5,6);
     // int mydata[12] = {
     //     6,0,-1,0,
     //     14,0,0,-2,
     //     0,2,-2,-1
     // };
     // matrix* mymatrix = createMatrix(3,4);
-    loadIntValues(mymatrix, mydata);
+    //loadIntValues(mymatrix, mydata);
+    //printMatrix(mymatrix);
+    //rref(mymatrix);
+    //printMatrix(mymatrix);
+    //chem_balance(mymatrix);
+    //freeMatrix(mymatrix);
+
+    //char* def_str = "αKNO₃ + βC₁₂H₂₂O₁₁ → ɣN₂ + δCO₂ + εH₂O + ζK₂O₃";
+    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2O3";
+    size_t n;
+    char* eqn;
+    if (argc == 1) eqn = def_str;
+    else eqn = argv[1];
+    printf("\n%s\n", eqn);
+    matrix* mymatrix = eqn_to_matrix(eqn);
     printMatrix(mymatrix);
     rref(mymatrix);
     printMatrix(mymatrix);
     chem_balance(mymatrix);
     freeMatrix(mymatrix);
-
-    char* eqn = "αKNO₃ + βC₁₂H₂₂O₁₁ → ɣN₂ + δCO₂ + εH₂O + ζK₂O₃";
-    //char* eqn = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2O3";
-    //char* eqn = "Wyatt6Nathan18Joe12 + H2SO4 = DeezNuts ABCDE H2SO4";
-    printf("%s\n", eqn);
-    size_t n;
-    char** elements = list_elements(eqn, &n);
-    for (size_t i = 0; i < n; i++){
-        printf("%s\n", elements[i]);
-        free(elements[i]);
-    }
-    free(elements);
     return 0;
 }
