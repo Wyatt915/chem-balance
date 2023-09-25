@@ -101,7 +101,9 @@ size_t get_matching_paren(const char* str){
 // int* col - the resultant column. Index corresponds to that in `elements`.
 // returns PARSE_ERROR on failure, PARSE_OK on success
 int count_in_species(const char* species, size_t len, const char** elements, int* col){
-    size_t sym_beg, sym_end, sym_len, paren_beg, paren_end;
+    printf("Count in species: %s\n", species);
+    size_t sym_beg, sym_end, sym_len;
+    int paren_beg, paren_end;
     const char* p = species;
     char temp[16];
     long int subscript;
@@ -109,7 +111,7 @@ int count_in_species(const char* species, size_t len, const char** elements, int
         col[i] = 0;
     }
     while (get_next_element(p, &sym_beg, &sym_end)){
-        paren_beg = char_in_str(p, sym_end - sym_beg, '(');
+        paren_beg = char_in_str(p, sym_end, '(');
         // check for opening parentheses between current element and next element
         if (paren_beg >= 0){
             paren_end = get_matching_paren(p+paren_beg);
@@ -146,11 +148,12 @@ int count_in_species(const char* species, size_t len, const char** elements, int
             sym_len = sym_end - sym_beg < 16 ? sym_end - sym_beg : 15;
             memset(temp, 0, 16); // fill w/ nulls because I don't trust strncpy
             strncpy(temp, p + sym_beg, sym_len);
-            p += sym_end - sym_beg;
+            p += sym_end;
             int idx = bin_search(elements, len, temp);
             if (idx < 0) return PARSE_ERROR;
             errno = 0;
             subscript = *p ? strtol(p, NULL, 10) : 1;
+            subscript = subscript == 0 ? 1 : subscript;
             if (errno) return PARSE_ERROR;
             col[idx] += subscript;
         }

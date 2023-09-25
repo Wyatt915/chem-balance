@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
     //freeMatrix(mymatrix);
 
     //char* def_str = "αKNO₃ + βC₁₂H₂₂O₁₁ → ɣN₂ + δCO₂ + εH₂O + ζK₂O₃";
-    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2O3";
+    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2CO3";
     size_t n;
     char* eqn;
     if (argc == 1) eqn = def_str;
