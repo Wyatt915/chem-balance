@@ -31,35 +31,14 @@ void chem_balance(matrix* m){
 }
 
 int main(int argc, char* argv[]){
-    // int mydata[30] = {
-    //     -1,  0,   0,  0,  0,  2,
-    //     -1,  0,   2,  0,  0,  0,
-    //     -3, -11,  0,  2,  1,  3,
-    //     0,  -12,  0,  1,  0,  1,
-    //     0,  -22,  0,  0,  2,  0
-    // };
-    // matrix* mymatrix = createMatrix(5,6);
-    // int mydata[12] = {
-    //     6,0,-1,0,
-    //     14,0,0,-2,
-    //     0,2,-2,-1
-    // };
-    // matrix* mymatrix = createMatrix(3,4);
-    //loadIntValues(mymatrix, mydata);
-    //printMatrix(mymatrix);
-    //rref(mymatrix);
-    //printMatrix(mymatrix);
-    //chem_balance(mymatrix);
-    //freeMatrix(mymatrix);
-
-    //char* def_str = "αKNO₃ + βC₁₂H₂₂O₁₁ → ɣN₂ + δCO₂ + εH₂O + ζK₂O₃";
-    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2CO3";
-    size_t n;
+//    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2CO3";
+    char* def_str = "Al(OH)3 + H2SO4 = Al2(SO4)3 + H2O";
     char* eqn;
     if (argc == 1) eqn = def_str;
     else eqn = argv[1];
     printf("\n%s\n", eqn);
     matrix* mymatrix = eqn_to_matrix(eqn);
+    if (!mymatrix) return 1;
     printMatrix(mymatrix);
     rref(mymatrix);
     printMatrix(mymatrix);

@@ -39,7 +39,7 @@ int get_next_element(const char* eqn, size_t* beg, size_t* end){
     return 1;
 }
 
-int bin_search(const char** lst, size_t len, const char* key){
+int bin_search(char** lst, size_t len, const char* key){
     if (len == 0) return -1;
     size_t a = 0;
     size_t b = len-1;
@@ -100,8 +100,7 @@ size_t get_matching_paren(const char* str){
 // char** elements - actual list of elements (sorted)
 // int* col - the resultant column. Index corresponds to that in `elements`.
 // returns PARSE_ERROR on failure, PARSE_OK on success
-int count_in_species(const char* species, size_t len, const char** elements, int* col){
-    printf("Count in species: %s\n", species);
+int count_in_species(const char* species, size_t len, char** elements, int* col){
     size_t sym_beg, sym_end, sym_len;
     int paren_beg, paren_end;
     const char* p = species;
@@ -116,19 +115,22 @@ int count_in_species(const char* species, size_t len, const char** elements, int
         if (paren_beg >= 0){
             paren_end = get_matching_paren(p+paren_beg);
             if (paren_end == 0) return PARSE_ERROR; //ERROR
+            // the get_matching_paren function returns the offset from the open paren
+            // so we need to add the offset due to the initial paren.
+            paren_end += paren_beg;
             int* subcount = calloc(len, sizeof(int));
-            // guaranteed to be enough to includd null terminator
+            // guaranteed to be enough to include null terminator
             char* substring = calloc(paren_end - paren_beg, sizeof(char));
             for (size_t i = paren_beg + 1, j = 0; i < paren_end; i++, j++){
                 substring[j] = p[i];
             }
-            if(count_in_species(substring, len, elements, subcount) == 0) {
+            if(count_in_species(substring, len, elements, subcount) == PARSE_ERROR) {
                 free(substring);
                 free(subcount);
                 return PARSE_ERROR;
             }
-            free(substring);
 
+            p += paren_end + 1;
             errno = 0;
             subscript = *p ? strtol(p, NULL, 10) : 1;
             if (errno){
@@ -141,7 +143,7 @@ int count_in_species(const char* species, size_t len, const char** elements, int
                 col[i] += subcount[i] * subscript;
             }
             free(subcount);
-            p += paren_end + 1;
+            free(substring);
         }
         else {
             // truncate symbol to 15 chars
@@ -164,7 +166,6 @@ int count_in_species(const char* species, size_t len, const char** elements, int
 char** list_elements(const char * eqn, size_t* count){
     // worst case is that we could have a single species made up entirely of
     // elements with single-character symbols.
-    printf("list_elements: %s\n", eqn);
     size_t n = strlen(eqn);
     char **list = malloc(n * sizeof(char*));
     for (size_t i = 0; i < n; i++){
@@ -207,9 +208,6 @@ char** list_elements(const char * eqn, size_t* count){
     free(list);
     // sort alphabetically
     qsort(out, *count, sizeof(char*), strcmpWrapper);
-    for (size_t i = 0; i < *count; i++){
-        printf("%s\n", out[i]);
-    }
     return out;
 }
 
@@ -248,8 +246,6 @@ matrix* eqn_to_matrix(const char* eqn){
 
     char** elements_r = list_elements(reactants, &num_elem_r);
     char** elements_p = list_elements(products, &num_elem_p);
-
-    printf("num_elem_r: %i\tnum_elem_p: %i\n", num_elem_r, num_elem_p);
 
     if (is_invalid(elements_r, num_elem_r, elements_p, num_elem_p)){
         free(reactants);
