@@ -229,19 +229,26 @@ int is_invalid(char** elem_r, size_t num_r, char** elem_p, size_t num_p){
 
 matrix* eqn_to_matrix(const char* eqn){
     size_t len = strlen(eqn);
+    char* temp;
     char* eqn_copy = calloc(len + 1, sizeof(char));
     strcpy(eqn_copy, eqn);
-    char* temp;
-
     temp = strtok(eqn_copy, "=");
-    if (!temp) return NULL;
+    if (!temp) {
+        free(eqn_copy);
+        return NULL;
+    }
+
     char* reactants = malloc((strlen(temp)+1)*sizeof(char));
     strcpy(reactants, temp);
     temp = strtok(NULL, "=");
-    if (!temp) return NULL;
+    if (!temp){
+        free(eqn_copy);
+        return NULL;
+    }
     char* products = malloc((strlen(temp)+1)*sizeof(char));
     strcpy(products, temp);
 
+    free(eqn_copy);
     size_t num_elem_r, num_elem_p; // count number of elements in reactants and products
 
     char** elements_r = list_elements(reactants, &num_elem_r);
@@ -294,6 +301,9 @@ matrix* eqn_to_matrix(const char* eqn){
         temp = strtok(NULL, " +");
     } while (temp);
 
+    free(reactants);
+    free(products);
+
     // If we got to this point then num_elem_r == num_elem_p. The number of
     // columns is the number of reactant species plus the number of product
     // species.
@@ -307,12 +317,22 @@ matrix* eqn_to_matrix(const char* eqn){
             //mult by -1 only for reactants
             eqnMatrix->data[r][c] = itofrac(-1 * column[r]);
         }
+        free(reactant_species[c]);
     }
+    free(reactant_species);
     for (size_t c = num_react; c < num_cols; c++){
         count_in_species(product_species[c-num_react], num_rows, elements, column);
         for (size_t r = 0; r < num_rows; r++){
             eqnMatrix->data[r][c] = itofrac(column[r]);
         }
+        free(product_species[c-num_react]);
     }
+    free(product_species);
+    free(column);
+
+    for (size_t i = 0; i < num_rows; i++){
+        free(elements[i]);
+    }
+    free(elements);
     return eqnMatrix;
 }

@@ -1,3 +1,4 @@
 *.o
 *.xopp
 balance
+vgcore.*
