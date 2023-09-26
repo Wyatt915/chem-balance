@@ -242,6 +242,7 @@ matrix* eqn_to_matrix(const char* eqn){
     strcpy(reactants, temp);
     temp = strtok(NULL, "=");
     if (!temp){
+        free(reactants);
         free(eqn_copy);
         return NULL;
     }
