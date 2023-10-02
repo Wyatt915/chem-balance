@@ -12,7 +12,7 @@ OBJECTS = $(SOURCES:.c=.o)
 all: CFLAGS += -O2
 all: $(EXEC)
 
-debug: CFLAGS += -ggdb -DDEBUG
+debug: CFLAGS += -Og -ggdb -DDEBUG
 debug: $(EXEC)
 
 %.o: %.c $(DEPS)

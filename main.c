@@ -31,9 +31,9 @@ void chem_balance(matrix* m){
 }
 
 int main(int argc, char* argv[]){
-//    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2CO3";
+    char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2CO3";
     // char* def_str = "Al(OH)3 + H2SO4 = Al2(SO4)3 + H2O";
-    char* def_str = "Al(OH)3 ++ ....... ++ H2SO4";
+    //char* def_str = "Al(OH)3 ++ ....... ++ H2SO4";
     char* eqn;
     if (argc == 1) eqn = def_str;
     else eqn = argv[1];

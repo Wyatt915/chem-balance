@@ -13,6 +13,9 @@
 #define PARSE_OK 0
 #define PARSE_ERROR 1
 
+#define TRUE (1 == 1)
+#define FALSE (1 == 0)
+
 struct element {
     char* name;
     size_t count;
@@ -20,6 +23,12 @@ struct element {
 
 typedef struct element element;
 
+void free_strarray(StrArray* ary){
+    for (size_t i = 0; i < ary->len ; i++){
+        free(ary->data[i]);
+    }
+    free(ary->data);
+}
 
 // For use with qsort, taken directly form the man page
 static int strcmpWrapper(const void * p1, const void * p2){
@@ -96,11 +105,11 @@ size_t get_matching_paren(const char* str){
 }
 
 // generates one column of the matrix for each species
-// size_t len - length of element list (total number of elements in the reaction)
 // char** elements - actual list of elements (sorted)
 // int* col - the resultant column. Index corresponds to that in `elements`.
 // returns PARSE_ERROR on failure, PARSE_OK on success
-int count_in_species(const char* species, size_t len, char** elements, int* col){
+int count_in_species(const char* species, StrArray elements, int* col){
+    size_t len = elements.len;
     size_t sym_beg, sym_end, sym_len;
     int paren_beg, paren_end;
     const char* p = species;
@@ -124,7 +133,7 @@ int count_in_species(const char* species, size_t len, char** elements, int* col)
             for (size_t i = paren_beg + 1, j = 0; i < paren_end; i++, j++){
                 substring[j] = p[i];
             }
-            if(count_in_species(substring, len, elements, subcount) == PARSE_ERROR) {
+            if(count_in_species(substring, elements, subcount) == PARSE_ERROR) {
                 free(substring);
                 free(subcount);
                 return PARSE_ERROR;
@@ -151,7 +160,7 @@ int count_in_species(const char* species, size_t len, char** elements, int* col)
             memset(temp, 0, 16); // fill w/ nulls because I don't trust strncpy
             strncpy(temp, p + sym_beg, sym_len);
             p += sym_end;
-            int idx = bin_search(elements, len, temp);
+            int idx = bin_search(elements.data, len, temp);
             if (idx < 0) return PARSE_ERROR;
             errno = 0;
             subscript = *p ? strtol(p, NULL, 10) : 1;
@@ -211,23 +220,28 @@ char** list_elements(const char * eqn, size_t* count){
     return out;
 }
 
-int is_invalid(char** elem_r, size_t num_r, char** elem_p, size_t num_p){
+int is_valid(char** elem_r, size_t num_r, char** elem_p, size_t num_p){
     for (size_t i = 0; i < num_r; i++){
         if (bin_search(elem_p, num_p, elem_r[i]) < 0){
             fprintf(stderr, "Element %s in reactants not in products\n", elem_r[i]);
-            return PARSE_ERROR;
+            return FALSE;
         }
     }
     for (size_t i = 0; i < num_p; i++){
         if (bin_search(elem_r, num_r, elem_p[i]) < 0){
             fprintf(stderr, "Element %s in products not in reactants\n", elem_p[i]);
-            return PARSE_ERROR;
+            return FALSE;
         }
     }
-    return PARSE_OK;
+    return TRUE;
 }
 
-matrix* eqn_to_matrix(const char* eqn){
+
+int get_element_list(const char* eqn, StrArray* lst){
+    if (lst->data){
+        fprintf(stderr, "Expected null-initialized StrArray\n");
+        return PARSE_ERROR;
+    }
     size_t len = strlen(eqn);
     char* temp;
     char* eqn_copy = calloc(len + 1, sizeof(char));
@@ -235,7 +249,7 @@ matrix* eqn_to_matrix(const char* eqn){
     temp = strtok(eqn_copy, "=");
     if (!temp) {
         free(eqn_copy);
-        return NULL;
+        return PARSE_ERROR;
     }
 
     char* reactants = malloc((strlen(temp)+1)*sizeof(char));
@@ -244,7 +258,7 @@ matrix* eqn_to_matrix(const char* eqn){
     if (!temp){
         free(reactants);
         free(eqn_copy);
-        return NULL;
+        return PARSE_ERROR;
     }
     char* products = malloc((strlen(temp)+1)*sizeof(char));
     strcpy(products, temp);
@@ -255,7 +269,7 @@ matrix* eqn_to_matrix(const char* eqn){
     char** elements_r = list_elements(reactants, &num_elem_r);
     char** elements_p = list_elements(products, &num_elem_p);
 
-    if (is_invalid(elements_r, num_elem_r, elements_p, num_elem_p)){
+    if (!is_valid(elements_r, num_elem_r, elements_p, num_elem_p)){
         free(reactants);
         free(products);
         for (size_t i = 0; i < num_elem_r; i++){
@@ -266,22 +280,54 @@ matrix* eqn_to_matrix(const char* eqn){
         }
         free(elements_p);
         free(elements_r);
-        return NULL;
+        return PARSE_ERROR;
     }
 
-    //at this point we only need one element list
     for (size_t i = 0; i < num_elem_r; i++){
         free(elements_r[i]);
     }
     free(elements_r);
-    char** elements = elements_p;
 
-    size_t num_react = count_in_str(reactants, '+') + 1;
-    size_t num_prod = count_in_str(products, '+') + 1;
+    free(reactants);
+    free(products);
+
+    lst->len = num_elem_p;
+    lst->data = elements_p;
+    return PARSE_OK;
+}
+
+int get_reactants_products(const char* eqn, StrArray* react_lst, StrArray* prod_lst){
+    if (react_lst->data || prod_lst->data){
+        fprintf(stderr, "Expected null-initialized StrArray\n");
+        return PARSE_ERROR;
+    }
+    size_t len = strlen(eqn);
+    char* temp;
+    char* eqn_copy = calloc(len + 1, sizeof(char));
+    strcpy(eqn_copy, eqn);
+    temp = strtok(eqn_copy, "=");
+    if (!temp) {
+        free(eqn_copy);
+        return PARSE_ERROR;
+    }
+    char* react_str = malloc((strlen(temp)+1)*sizeof(char));
+    strcpy(react_str, temp);
+    temp = strtok(NULL, "=");
+    if (!temp){
+        free(react_str);
+        free(eqn_copy);
+        return PARSE_ERROR;
+    }
+    char* prod_str = malloc((strlen(temp)+1)*sizeof(char));
+    strcpy(prod_str, temp);
+
+    size_t num_react = count_in_str(react_str, '+') + 1;
+    size_t num_prod = count_in_str(prod_str, '+') + 1;
 
     char** reactant_species = malloc(num_react * sizeof(char*));
     char** product_species  = malloc(num_prod * sizeof(char*));
-    temp = strtok(reactants, " +");
+
+    temp = strtok(react_str, " +");
     size_t count = 0;
     do {
         if (strlen(temp) > 0){
@@ -291,8 +337,9 @@ matrix* eqn_to_matrix(const char* eqn){
         }
         temp = strtok(NULL, " +");
     } while (temp);
+
     count = 0;
-    temp = strtok(products, " +");
+    temp = strtok(prod_str, " +");
     do {
         if (strlen(temp) > 0){
             product_species[count] = malloc((strlen(temp)+1) * sizeof(char));
@@ -302,38 +349,58 @@ matrix* eqn_to_matrix(const char* eqn){
         temp = strtok(NULL, " +");
     } while (temp);
 
-    free(reactants);
-    free(products);
+    free(react_str);
+    free(prod_str);
 
-    // If we got to this point then num_elem_r == num_elem_p. The number of
-    // columns is the number of reactant species plus the number of product
-    // species.
-    size_t num_rows = num_elem_r;
-    size_t num_cols = num_prod + num_react;
+    react_lst->data = reactant_species;
+    react_lst->len = num_react;
+
+    prod_lst->data = product_species;
+    prod_lst->len = num_prod;
+
+    return PARSE_OK;
+}
+
+matrix* eqn_to_matrix(const char* eqn){
+    StrArray elements = EMPY_STRARRAY;
+    StrArray reactants = EMPY_STRARRAY;
+    StrArray products = EMPY_STRARRAY;
+
+    if(get_element_list(eqn, &elements) != PARSE_OK){
+        free_strarray(&elements);
+        return NULL;
+    }
+
+    if(get_reactants_products(eqn, &reactants, &products) != PARSE_OK){
+        free_strarray(&elements);
+        free_strarray(&reactants);
+        free_strarray(&products);
+        return NULL;
+    }
+
+    // The number of columns is the number of reactant species plus the number
+    // of product species.
+    size_t num_rows = elements.len;
+    size_t num_cols = products.len + reactants.len;
     matrix* eqnMatrix = createMatrix(num_rows, num_cols);
     int* column = malloc(num_rows * sizeof(int));
-    for (size_t c = 0; c < num_react; c++){
-        count_in_species(reactant_species[c], num_rows, elements, column);
+    for (size_t c = 0; c < reactants.len; c++){
+        count_in_species(reactants.data[c], elements, column);
         for (size_t r = 0; r < num_rows; r++){
             //mult by -1 only for reactants
             eqnMatrix->data[r][c] = itofrac(-1 * column[r]);
         }
-        free(reactant_species[c]);
     }
-    free(reactant_species);
-    for (size_t c = num_react; c < num_cols; c++){
-        count_in_species(product_species[c-num_react], num_rows, elements, column);
+    for (size_t c = reactants.len; c < num_cols; c++){
+        count_in_species(products.data[c-reactants.len], elements, column);
         for (size_t r = 0; r < num_rows; r++){
             eqnMatrix->data[r][c] = itofrac(column[r]);
         }
-        free(product_species[c-num_react]);
     }
-    free(product_species);
+    free_strarray(&reactants);
+    free_strarray(&products);
+    free_strarray(&elements);
     free(column);
 
-    for (size_t i = 0; i < num_rows; i++){
-        free(elements[i]);
-    }
-    free(elements);
     return eqnMatrix;
 }
