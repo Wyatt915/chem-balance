@@ -4,7 +4,8 @@
 #include "frac.h"
 #include "parse.h"
 
-void chem_balance(matrix* m){
+int* chem_balance(matrix* m){
+    rref(m);
     int* freecolumn = malloc(m->r * sizeof(int));
     int* coefficients = malloc(m->c * sizeof(int));
     size_t count = 0;
@@ -22,12 +23,9 @@ void chem_balance(matrix* m){
         coefficients[r] = -1*fr_mul(scalar, m->data[r][m->c-1]).n;
     }
     coefficients[count] = scalar.n * divisor;
-    for (size_t i = 0; i < m->c; i++){
-        printf("%c=%i\t", 'a'+i, coefficients[i]);
-    }
-    printf("\n");
-    free(coefficients);
+
     free(freecolumn);
+    return coefficients;
 }
 
 int main(int argc, char* argv[]){
@@ -40,10 +38,21 @@ int main(int argc, char* argv[]){
     printf("\n%s\n", eqn);
     matrix* mymatrix = eqn_to_matrix(eqn);
     if (!mymatrix) return 1;
-    printMatrix(mymatrix);
-    rref(mymatrix);
-    printMatrix(mymatrix);
-    chem_balance(mymatrix);
+
+    int* coefficients = chem_balance(mymatrix);
+    StrArray reactants = EMPY_STRARRAY;
+    StrArray products = EMPY_STRARRAY;
+    get_reactants_products(eqn, &reactants, &products);
+    size_t idx = 0;
+    for (size_t i = 0; i < reactants.len; i++){
+        printf("%i\t%s\n", coefficients[idx++], reactants.data[i]);
+    }
+    for (size_t i = 0; i < products.len; i++){
+        printf("%i\t%s\n", coefficients[idx++], products.data[i]);
+    }
+    free(coefficients);
     freeMatrix(mymatrix);
+    free_strarray(&reactants);
+    free_strarray(&products);
     return 0;
 }

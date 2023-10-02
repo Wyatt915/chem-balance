@@ -349,6 +349,7 @@ int get_reactants_products(const char* eqn, StrArray* react_lst, StrArray* prod_
         temp = strtok(NULL, " +");
     } while (temp);
 
+    free(eqn_copy);
     free(react_str);
     free(prod_str);
 
