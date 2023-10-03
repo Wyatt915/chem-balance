@@ -48,6 +48,8 @@ void loadIntValues(matrix* m, int* values){
     }
 }
 
+//------------------------------------[Row Reduction functions]-------------------------------------
+
 void swapRows(matrix* m, size_t r1, size_t r2){
     frac* row = m->data[r1];
     m->data[r1] = m->data[r2];
@@ -141,4 +143,35 @@ void rref(matrix* m){
     }
     normalize_rows(m);
     normalize_pivots(m);
+}
+
+//----------------------------------------[Other Matrix Ops]----------------------------------------
+
+
+matrix* transpose(const matrix* m){
+    matrix* result = createMatrix(m->c, m->r);
+    for (size_t row = 0; row < m->r; row++){
+        for (size_t col = 0; col < m->c; col++){
+            result->data[col][row] = m->data[row][col];
+        }
+    }
+    return result;
+}
+
+matrix* matmul(const matrix* m1, const matrix* m2){
+    if (m1->c != m2->r){
+        fprintf(stderr, "ERROR: Dimension mismatch\n");
+        return NULL;
+    }
+    matrix* result = createMatrix(m1->r, m2->c);
+    for (size_t row = 0; row < result->r; row++){
+        for (size_t col = 0; col < result->c; col++){
+            frac temp = ZEROFRAC;
+            for (size_t i = 0; i < m1->c; i++){
+                temp = fr_add(temp, fr_mul(m1->data[row][i], m2->data[i][col]));
+            }
+            result->data[row][col] = temp;
+        }
+    }
+    return result;
 }

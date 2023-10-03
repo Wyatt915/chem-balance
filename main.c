@@ -28,31 +28,57 @@ int* chem_balance(matrix* m){
     return coefficients;
 }
 
+void print_balanced_equation(const char* eqn, const int* coeff){
+    StrArray reactants = EMPTY_STRARRAY;
+    StrArray products = EMPTY_STRARRAY;
+    get_reactants_products(eqn, &reactants, &products);
+    size_t idx = 0;
+    for (size_t i = 0; i < reactants.len - 1; i++){
+        if (coeff[idx] > 1) printf("%i", coeff[idx]);
+        printf("%s + ", reactants.data[i]);
+        idx++;
+    }
+    if (coeff[idx] > 1) printf("%i", coeff[idx]);
+    printf("%s = ", reactants.data[reactants.len - 1]);
+    idx++;
+    for (size_t i = 0; i < products.len - 1; i++){
+        if (coeff[idx] > 1) printf("%i", coeff[idx]);
+        printf("%s + ", products.data[i]);
+        idx++;
+    }
+    if (coeff[idx] > 1) printf("%i", coeff[idx]);
+    printf("%s\n", products.data[products.len - 1]);
+    free_strarray(&reactants);
+    free_strarray(&products);
+}
+
 int main(int argc, char* argv[]){
     char* def_str = "KNO3 + C12H22O11 = N2 + CO2 + H2O + K2CO3";
     // char* def_str = "Al(OH)3 + H2SO4 = Al2(SO4)3 + H2O";
-    //char* def_str = "Al(OH)3 ++ ....... ++ H2SO4";
     char* eqn;
     if (argc == 1) eqn = def_str;
     else eqn = argv[1];
-    printf("\n%s\n", eqn);
+
     matrix* mymatrix = eqn_to_matrix(eqn);
     if (!mymatrix) return 1;
 
     int* coefficients = chem_balance(mymatrix);
-    StrArray reactants = EMPY_STRARRAY;
-    StrArray products = EMPY_STRARRAY;
-    get_reactants_products(eqn, &reactants, &products);
-    size_t idx = 0;
-    for (size_t i = 0; i < reactants.len; i++){
-        printf("%i\t%s\n", coefficients[idx++], reactants.data[i]);
-    }
-    for (size_t i = 0; i < products.len; i++){
-        printf("%i\t%s\n", coefficients[idx++], products.data[i]);
-    }
+
+    print_balanced_equation(eqn, coefficients);
+
     free(coefficients);
     freeMatrix(mymatrix);
-    free_strarray(&reactants);
-    free_strarray(&products);
+    // matrix* mymatrix = createMatrix(3,3);
+    // int vals[] = {1,2,3,4,5,6,7,8,9};
+    // loadIntValues(mymatrix, vals);
+    // printMatrix(mymatrix);
+    // matrix* squared = matmul(mymatrix, mymatrix);
+    // matrix* t = transpose(mymatrix);
+    // printMatrix(t);
+    // printMatrix(squared);
+    // freeMatrix(squared);
+    // freeMatrix(mymatrix);
+    // freeMatrix(t);
+
     return 0;
 }

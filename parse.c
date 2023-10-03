@@ -363,9 +363,9 @@ int get_reactants_products(const char* eqn, StrArray* react_lst, StrArray* prod_
 }
 
 matrix* eqn_to_matrix(const char* eqn){
-    StrArray elements = EMPY_STRARRAY;
-    StrArray reactants = EMPY_STRARRAY;
-    StrArray products = EMPY_STRARRAY;
+    StrArray elements = EMPTY_STRARRAY;
+    StrArray reactants = EMPTY_STRARRAY;
+    StrArray products = EMPTY_STRARRAY;
 
     if(get_element_list(eqn, &elements) != PARSE_OK){
         free_strarray(&elements);
