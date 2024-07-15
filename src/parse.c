@@ -16,12 +16,12 @@
 #define TRUE (1 == 1)
 #define FALSE (1 == 0)
 
-struct element {
-    char* name;
-    size_t count;
-};
-
-typedef struct element element;
+// struct element {
+//     char* name;
+//     size_t count;
+// };
+//
+// typedef struct element element;
 
 void free_strarray(StrArray* ary){
     for (size_t i = 0; i < ary->len ; i++){
@@ -363,6 +363,7 @@ int get_reactants_products(const char* eqn, StrArray* react_lst, StrArray* prod_
 }
 
 matrix* eqn_to_matrix(const char* eqn){
+    if (!eqn) return NULL;
     StrArray elements = EMPTY_STRARRAY;
     StrArray reactants = EMPTY_STRARRAY;
     StrArray products = EMPTY_STRARRAY;

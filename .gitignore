@@ -2,3 +2,4 @@
 *.xopp
 balance
 vgcore.*
+webassembly/

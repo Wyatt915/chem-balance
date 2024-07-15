@@ -1,25 +1,42 @@
-CC=gcc
-CFLAGS=-Wall
-LNFLAGS=
-DEPS = *.h
 EXEC = balance
 
-SOURCES = $(wildcard *.c)
-OBJECTS = $(SOURCES:.c=.o)
+VPATH = src
+CC = gcc
+CFLAGS = -Wall
+LNFLAGS =
+DEPS = $(wildcard $(VPATH)/*.h)
 
-.PHONY: debug clean
+BUILDDIR=build
+
+SOURCES = $(wildcard $(VPATH)/*.c)
+OBJECTS = $(patsubst $(VPATH)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
+
+WASM_DIR = wasm
+WASM_EXEC = $(WASM_DIR)/$(EXEC).html
+
+.PHONY: all debug wasm clean
 
 all: CFLAGS += -O2
-all: $(EXEC)
+all: $(BUILDDIR) $(EXEC)
 
 debug: CFLAGS += -Og -ggdb -DDEBUG
-debug: $(EXEC)
+debug: $(BUILDDIR) $(EXEC)
 
-%.o: %.c $(DEPS)
+wasm: CC=emcc
+wasm: $(WASM_EXEC)
+
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
+$(BUILDDIR)/%.o: %.c $(DEPS) | $(BUILDDIR)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(EXEC): $(OBJECTS)
 	$(CC) $^ $(LNFLAGS) -o $@
 
+$(WASM_EXEC): $(OBJECTS)
+	emcc $(OBJECTS) -o $(WASM_EXEC) --shell-file /home/cws/programs/emsdk/upstream/emscripten/src/shell_minimal.html
+
 clean:
-	rm -f *.o vgcore.*
+	rm -f $(BUILDDIR)/*.o vgcore.* $(WASM_DIR)/*
+	rmdir $(BUILDDIR)
